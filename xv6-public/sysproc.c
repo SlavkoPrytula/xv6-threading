@@ -95,3 +95,50 @@ sys_uptime(void)
 int sys_hello_world(void) {
 	return hello_world();
 }
+
+
+
+
+// Clone
+int sys_clone(void) {
+    void *function;
+    void *arg;
+    void *stack;
+
+    // Passing arguments from user-level functions to kernel-level functions
+    // argint uses the user-space esp register to locate the n’th argument: esp points at the
+    // return address for the system call stub. The arguments are right above it, at esp+4.
+    // Then the nth argument is at esp+4+4*n
+
+    // argptr is similar in purpose to argint: it interprets the nth system call argument.
+    // argptr calls argint to fetch the argument as an integer and then checks if the
+    // integer as a user pointer is indeed in the user part of the address space
+
+    if(argptr(0, (void *)&function, sizeof(void *)) < 0) {
+        return -1;
+    }
+    if(argint(1, (void *)&arg) < 0) {
+        return -1;
+    }
+    if(argint(2, (void *)&stack) < 0) {
+        return -1;
+    }
+    if ((uint)stack % PGSIZE != 0) {
+        return -1;
+    }
+    if ((uint)myproc()->sz - (uint)stack == PGSIZE / 2) {
+        return -1;
+    }
+
+    return clone(function, arg, stack);
+}
+
+
+int sys_join(void) {
+  void **stack;
+
+  if(argptr(0, (void *)&stack, sizeof(void *)) < 0)
+    return -1;
+
+  return join(stack);
+}

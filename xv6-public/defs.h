@@ -188,8 +188,12 @@ void            clearpteu(pde_t *pgdir, char *uva);
 
 
 // NEW
-int hello_world(void);
+int 		hello_world(void);
 
+// Clone
+int             clone(void(*function)(void*), void*, void*);
+// Join
+int             join(void**);
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))

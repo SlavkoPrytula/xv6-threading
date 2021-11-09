@@ -32,3 +32,8 @@ SYSCALL(uptime)
 
 // NEW
 SYSCALL(hello_world)
+
+// Clone
+SYSCALL(clone)
+// Join
+SYSCALL(join)

@@ -40,3 +40,9 @@ int atoi(const char*);
 
 // NEW
 int hello_world(void);
+int clone(void(*function)(void*), void*, void*);
+int join(void**);
+
+
+int thread_create(void (*function)(void*), void *arg);
+int thread_join();

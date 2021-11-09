@@ -4,9 +4,11 @@
 #include "user.h"
 #include "x86.h"
 
-char*
-strcpy(char *s, const char *t)
-{
+
+#define PGSIZE 4096
+
+
+char* strcpy(char *s, const char *t) {
   char *os;
 
   os = s;
@@ -15,17 +17,13 @@ strcpy(char *s, const char *t)
   return os;
 }
 
-int
-strcmp(const char *p, const char *q)
-{
+int strcmp(const char *p, const char *q) {
   while(*p && *p == *q)
     p++, q++;
   return (uchar)*p - (uchar)*q;
 }
 
-uint
-strlen(const char *s)
-{
+uint strlen(const char *s) {
   int n;
 
   for(n = 0; s[n]; n++)
@@ -33,25 +31,19 @@ strlen(const char *s)
   return n;
 }
 
-void*
-memset(void *dst, int c, uint n)
-{
+void* memset(void *dst, int c, uint n) {
   stosb(dst, c, n);
   return dst;
 }
 
-char*
-strchr(const char *s, char c)
-{
+char* strchr(const char *s, char c) {
   for(; *s; s++)
     if(*s == c)
       return (char*)s;
   return 0;
 }
 
-char*
-gets(char *buf, int max)
-{
+char* gets(char *buf, int max) {
   int i, cc;
   char c;
 
@@ -67,9 +59,7 @@ gets(char *buf, int max)
   return buf;
 }
 
-int
-stat(const char *n, struct stat *st)
-{
+int stat(const char *n, struct stat *st) {
   int fd;
   int r;
 
@@ -81,9 +71,7 @@ stat(const char *n, struct stat *st)
   return r;
 }
 
-int
-atoi(const char *s)
-{
+int atoi(const char *s) {
   int n;
 
   n = 0;
@@ -92,9 +80,7 @@ atoi(const char *s)
   return n;
 }
 
-void*
-memmove(void *vdst, const void *vsrc, int n)
-{
+void* memmove(void *vdst, const void *vsrc, int n) {
   char *dst;
   const char *src;
 
@@ -103,4 +89,50 @@ memmove(void *vdst, const void *vsrc, int n)
   while(n-- > 0)
     *dst++ = *src++;
   return vdst;
+}
+
+
+// Threads | Lock & Join
+int thread_create(void (*function)(void *), void *arg) {
+    // CHECK HERE FOR ARGUMENTS !!!
+//    if (!arg || !function) {
+//        exit();
+//    }
+
+    printf(1, "Create thread\n");
+    // alloc two pages of memory for stack and use
+    void *stack = malloc(PGSIZE * 2 + 4);
+    if (stack <= 0) {
+        printf(1, "Failed to malloc memory for stack in thread_create.\n");
+        exit();
+    }
+
+    printf(1, "thread_create stack: %d\n", stack);
+
+    // make sure stack is page aligned
+    if ((uint)stack % PGSIZE) {
+        printf(1, "malloced stack is not aligned in thread_create. Shift to next page.\n");
+        stack = stack + (PGSIZE - (uint)stack % PGSIZE);
+        printf(1, "new stack: %d\n", stack);
+    }
+    printf(1, "thread_create: clone() on stack %d.\n", stack);
+
+    return clone(function, arg, stack);
+}
+
+int thread_join() {
+    void *stack;
+    printf(1, "thread_join\n");
+
+    // get pid of thread
+    int pid;
+
+    // if not parent process, free the thread's stack
+    if ((pid = join(&stack)) != -1) {
+        printf(1, "joining thread %d\n", pid);
+        free(stack);
+    }
+    printf(1, "stack freed\n");
+
+  return pid;
 }

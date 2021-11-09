@@ -1,3 +1,4 @@
+
 #include "types.h"
 #include "defs.h"
 #include "param.h"
@@ -107,6 +108,12 @@ extern int sys_uptime(void);
 // NEW
 extern int sys_hello_world(void);
 
+// Clone
+extern int sys_clone(void);
+
+// Join
+extern int sys_join(void);
+
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -133,7 +140,8 @@ static int (*syscalls[])(void) = {
 
 // NEW
 [SYS_hello_world]   sys_hello_world,
-
+[SYS_clone]	sys_clone,
+[SYS_join]	sys_join
 
 };
 

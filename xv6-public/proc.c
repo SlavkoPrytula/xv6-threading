@@ -543,3 +543,142 @@ int hello_world(void) {
   cprintf("hello world\n");
   return 1;
 }
+
+
+
+// Clone
+int clone(void(*function)(void*), void *arg, void *stack) {
+    cprintf("Create clone with stack %d and args %d | %d.\n", stack, (int)arg);
+
+    struct proc *new_process;
+    struct proc *curr_process = myproc();
+
+    // make sure that the stack is aligned and not outside the set boundaries
+    if ((uint)stack + PGSIZE > curr_process->sz) {
+        cprintf("Stack is outside of process memory space.\n");
+        exit();
+    }
+    if ((uint)stack % PGSIZE) {
+        cprintf("Stack is not page aligned.\n");
+        exit();
+    }
+
+    // Allocate process
+    if ((new_process = allocproc()) == 0) {
+        cprintf("allocproc() failed in clone.\n");
+        return -1;
+    }
+    // Get the pid of the new process to return if success
+    int pid = new_process->pid;
+
+    /** share pgdir of parent instead of copying and set stack to new stack **/
+    cprintf("clone: copy parent process pgdir, size, and trapframe, set curproc as parent, clear eax.\n");
+
+    // new kernel thread shares the calling process's address space
+    new_process->pgdir = curr_process->pgdir;
+    new_process->sz = curr_process->sz;
+    new_process->parent = curr_process;
+    *new_process->tf = *curr_process->tf;
+    // new_process->stack = stack;              ??????? (is this needed)
+    // new_process->lock = curr_process->lock;
+
+    // Clear %eax so that clone returns 0 in the child thread
+    new_process->tf->eax = 0;
+
+    // set up new stack, build from top down
+    cprintf("clone: setup stack.\n");
+    new_process->ustack = stack; // set top (memory bottom) of thread's user stack
+    // stack index for building stack. The "bottom" is actually the top of the memory space, hence we subtract
+    uint stack_bottom = (uint)stack + PGSIZE;
+    *((uint*)(stack_bottom - (1 * sizeof(uint)))) = (uint)arg;
+    *((uint*)(stack_bottom - (2 * sizeof(uint)))) = 0xffffffff; // setup the fake return address
+
+    new_process->tf->esp = stack_bottom - (2 * sizeof(uint));
+    new_process->tf->eip = (uint)function;
+
+    for(uint i = 0; i < NOFILE; i++) {
+        if(curr_process->ofile[i]) {
+            new_process->ofile[i] = filedup(curr_process->ofile[i]);
+        }
+    }
+    new_process->cwd = idup(curr_process->cwd);
+
+    cprintf("Copying process name %s to new process.\n", curr_process->name);
+    safestrcpy(new_process->name, curr_process->name, sizeof(curr_process->name));
+
+    acquire(&ptable.lock);
+    new_process->state = RUNNABLE;
+    release(&ptable.lock);
+
+    // increment thread count by one
+    new_process->refs = curr_process->refs;
+    *new_process->refs += 1;
+
+    // Save the name for child
+    safestrcpy(new_process->name, curr_process->name, sizeof(curr_process->name));
+
+    cprintf("Thread created with pid %d\n", pid);
+
+    return pid;
+}
+
+
+// Join
+int join(void **stack) {
+    // This method mostly copy from wait().
+    // Indeed, this method only wait for children who share the same address space
+    cprintf("join\n");
+
+    struct proc *process;
+    int pid;
+    struct proc *curr_process = myproc();
+
+    cprintf("join, curproc pid: %d\n", curr_process->pid);
+    cprintf("join, curproc pgdir: %d\n", *curr_process->pgdir);
+
+    acquire(&ptable.lock);
+    for(;;){
+        // Scanning through the page table to look out for exited child processes
+        for(process = ptable.proc; process < &ptable.proc[NPROC]; process++){
+            // Get the pid of the maybe running process to return if success
+            pid = process->pid;
+
+            // found a different process, but not a thread
+            // check if share the same address space
+            if(process->parent != curr_process || process->pgdir != curr_process->pgdir) {
+                cprintf("join, found process with different parent: %d\n", (process->parent)->pid);
+                continue;
+            }
+            cprintf("join: found a child: %d.\n", pid);
+
+            if(process->state == ZOMBIE) {
+                cprintf("join: pid %d is a ZOMBIE!\n", pid);
+                // set stack to thread's user stack
+                // the location of child's user stack is copied into argument *stack
+                // which will be freed later
+                *stack = process->ustack;
+
+                // Found one.
+                cprintf("join: free zombie's stack.\n");
+                kfree(process->kstack);
+                cprintf("join: zero out zombie's values.\n");
+                process->kstack = 0;
+                process->pid = 0;
+                process->parent = 0;
+                process->name[0] = 0;
+                process->killed = 0;
+                cprintf("join: set zombie's state to UNUSED.\n");
+                process->state = UNUSED;
+                cprintf("join: release zombie's lock.\n");
+
+                // decrement thread count
+                *process->refs -= 1;
+
+                release(&ptable.lock);
+                return pid;
+            }
+        }
+
+        sleep(curr_process, &ptable.lock);  //DOC: wait-sleep
+    }
+}
