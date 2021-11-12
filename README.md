@@ -19,8 +19,10 @@ bash start_up.sh
 <br/>
 
 
+---
+# Overview
 --- 
-# ❓ The first process
+## ❓ The first process
 
 A process is an abstraction that provides the illusion to a program that it has its own abstract machine. A process provides a program with what appears to be a private memory system, or address space, which other processes cannot read or write.
 
@@ -40,7 +42,7 @@ Each process’s address space maps the kernel’s instructions and data as well
 ```
 
 ---
-# ❓ Running the first process
+## ❓ Running the first process
 
 Scheduler looks for a process with p->state set to **RUNNABLE**
 - It sets the per-cpu variable proc to the process it found and calls switchuvm to tell the hardware to start using the target process’s page table
