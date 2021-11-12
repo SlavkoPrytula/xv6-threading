@@ -94,45 +94,28 @@ void* memmove(void *vdst, const void *vsrc, int n) {
 
 // Threads | Lock & Join
 int thread_create(void (*function)(void *), void *arg) {
-    // CHECK HERE FOR ARGUMENTS !!!
-//    if (!arg || !function) {
-//        exit();
-//    }
-
-    printf(1, "Create thread\n");
     // alloc two pages of memory for stack and use
     void *stack = malloc(PGSIZE * 2 + 4);
     if (stack <= 0) {
-        printf(1, "Failed to malloc memory for stack in thread_create.\n");
         exit();
     }
 
-    printf(1, "thread_create stack: %d\n", stack);
-
     // make sure stack is page aligned
     if ((uint)stack % PGSIZE) {
-        printf(1, "malloced stack is not aligned in thread_create. Shift to next page.\n");
-        stack = stack + (PGSIZE - (uint)stack % PGSIZE);
-        printf(1, "new stack: %d\n", stack);
+        stack = stack + (PGSIZE - (uint) stack % PGSIZE);
     }
-    printf(1, "thread_create: clone() on stack %d.\n", stack);
-
     return clone(function, arg, stack);
 }
 
 int thread_join() {
-    void *stack;
-    printf(1, "thread_join\n");
-
     // get pid of thread
     int pid;
+    void *stack;
 
     // if not parent process, free the thread's stack
     if ((pid = join(&stack)) != -1) {
-        printf(1, "joining thread %d\n", pid);
         free(stack);
     }
-    printf(1, "stack freed\n");
 
-  return pid;
+    return pid;
 }

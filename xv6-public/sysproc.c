@@ -96,9 +96,6 @@ int sys_hello_world(void) {
 	return hello_world();
 }
 
-
-
-
 // Clone
 int sys_clone(void) {
     void *function;
@@ -113,20 +110,7 @@ int sys_clone(void) {
     // argptr is similar in purpose to argint: it interprets the nth system call argument.
     // argptr calls argint to fetch the argument as an integer and then checks if the
     // integer as a user pointer is indeed in the user part of the address space
-
-    if(argptr(0, (void *)&function, sizeof(void *)) < 0) {
-        return -1;
-    }
-    if(argint(1, (void *)&arg) < 0) {
-        return -1;
-    }
-    if(argint(2, (void *)&stack) < 0) {
-        return -1;
-    }
-    if ((uint)stack % PGSIZE != 0) {
-        return -1;
-    }
-    if ((uint)myproc()->sz - (uint)stack == PGSIZE / 2) {
+    if(argint(1, (void *)&arg) < 0 || argint(2, (void *)&stack) < 0 || argptr(0, (void *)&function, sizeof(void *)) < 0 || (uint)stack % PGSIZE != 0 || (uint)myproc()->sz - (uint)stack == PGSIZE / 2) {
         return -1;
     }
 

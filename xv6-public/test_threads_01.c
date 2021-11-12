@@ -6,28 +6,28 @@
 #include "fcntl.h"
 #include "syscall.h"
 
-int global;
-
 void func_01(void *arg) {
-  for (int i = 0; i < 50; i++) {
-	printf(1, "executing function 01\n");
-  }
-  exit();
+    for (int i = 0; i < 100; i++) {
+        printf(1, arg);
+    }
+    exit();
 }
+
 void func_02(void *arg) {
-  for (int i = 0; i < 50; i++) {
-	printf(1, "executing function 02\n");
-  }
-  exit();
+    for (int i = 0; i < 100; i++) {
+        printf(1, arg);
+    }
+    exit();
 }
 
 int main(int argc, char *argv[]) {
-  thread_create(func_01, 0);
-  thread_create(func_02, 0);
-  thread_join();
-  thread_join();
+    printf(1, "Starting test runs!\n\n");
 
-  //printf(1, "XV6_TEST_OUTPUT : global = %d i = %d\n", global, i);
+    thread_create(func_01, "hello world 01\n");
+    thread_create(func_02, "hello world 02\n");
+    thread_join();
+    thread_join();
 
-  exit();
+    printf(1, "\n\nTest passed!\n");
+    exit();
 }
