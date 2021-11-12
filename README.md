@@ -6,6 +6,19 @@
 
 This project is about understating how threads on xv6 OS work. Another task which underlies behing the idea of thie repository is the implementation of own thread making system calls.
 
+---
+# ➡️ Getting Started
+
+```bash
+git clone https://github.com/SlavkoPrytula/xv6-threading
+git cd xv6-threading
+bash start_up.sh 
+```
+<br/>
+<br/>
+<br/>
+
+
 --- 
 # ❓ The first process
 
