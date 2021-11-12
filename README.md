@@ -18,11 +18,22 @@ bash start_up.sh
 <br/>
 <br/>
 
+---
+# 🧠 Basics
+- xv6 uses 32-bit virtual addresses, resulting in a virtual address space of 4GB. xv6 uses paging to manage its memory allocations. However, xv6 does not do demand paging, so there is no concept of virtual memory
+- xv6 uses a page size of 4KB, and a two level page table structure
+  1. xv6 uses a page size of 4KB, and a two level page table structure. The CPU register CR3 contains a pointer to the page table of the current running process. The translation from virtual to physical addresses is performed by the MMU as follows
+  2. The first 10 bits of a 32-bit virtual address are used to index into a page table directory, which points to a page of the inner page table. The next 10 bits index into the inner page table to locate the page table entry (PTE). The PTE contains a 20-bit physical frame number and flags. Every page table in xv6 has mappings
+for user pages as well as kernel pages
+  3. The part of the page table dealing with kernel pages is the same across all processes
+
 
 ---
 # Overview
 --- 
 ## ❓ The first process
+![image](https://user-images.githubusercontent.com/25413268/141524043-09c28ecd-cfc1-486b-bad0-f8b01b20e951.png)
+
 
 A process is an abstraction that provides the illusion to a program that it has its own abstract machine. A process provides a program with what appears to be a private memory system, or address space, which other processes cannot read or write.
 
