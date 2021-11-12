@@ -135,3 +135,4 @@ void free(void*)    // free memory
  - [3] Processes in xv6 [https://www.youtube.com/watch?v=oQjolyqfUa8]
  - [4] Locks in xv6 [https://www.youtube.com/watch?v=pLgd-2gZikw&t]
  - [5] Memory Management in xv6 [https://www.cse.iitb.ac.in/~mythili/teaching/cs347_autumn2016/notes/08-xv6-memory.pdf]
+ - [6] xv6 Scheduling [https://www.cs.virginia.edu/~cr4bd/4414/F2018/slides/20180911--slides-1up.pdf]
