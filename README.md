@@ -4,7 +4,7 @@
 
 ---
 
-This project is about understating how threads on xv6 OS work. Another task which underlies behing the idea of thie repository is the implementation of own thread making system calls.
+This project is about understating how threads on xv6 OS work. Another task which underlies behind the idea of this repository is the implementation of own thread making wrapper functions and corresponding system calls.
 
 ---
 # ➡️ Getting Started
