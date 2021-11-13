@@ -95,7 +95,7 @@ void* memmove(void *vdst, const void *vsrc, int n) {
 // Threads | Lock & Join
 int thread_create(void (*function)(void *), void *arg) {
     // alloc two pages of memory for stack and use
-    void *stack = malloc(PGSIZE * 2 + 4);
+    void *stack = malloc(PGSIZE * 2); // stack per process + guard page
     if (stack <= 0) {
         exit();
     }
