@@ -46,3 +46,13 @@ int join(void**);
 
 int thread_create(void (*function)(void*), void *arg);
 int thread_join();
+
+struct lock {
+    volatile unsigned int locked;
+    volatile unsigned int next_ticket;
+    volatile int now_serving;
+};
+
+void lock_acquire(struct lock *lock);
+void lock_release(struct lock *lock);
+

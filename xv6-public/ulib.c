@@ -119,3 +119,14 @@ int thread_join() {
 
     return pid;
 }
+
+void lock_acquire(struct lock *lock) {
+    // acquire lock
+    while(test_and_set(&lock->locked) == 1)
+        ; // wait
+}
+
+void lock_release(struct lock *lock) {
+    // release lock
+    lock->locked = 0;
+}
