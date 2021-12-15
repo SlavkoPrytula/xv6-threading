@@ -54,7 +54,7 @@ struct proc {
 
   char *ustack;                // User stack for the thread
   int *refs;                   // Count number of threads
-  //struct spinlock lock;        // Lock used for growing address space
+  int tickets;
 };
 
 // Process memory is laid out contiguously, low addresses first:
