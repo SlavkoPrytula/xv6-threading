@@ -126,3 +126,14 @@ int sys_join(void) {
 
   return join(stack);
 }
+
+extern int change_tickets(int, int);
+
+int sys_change_tickets(void) {
+    int pid, tickets;
+    if (argint(0, &pid) < 0 || argint(1, &tickets) < 0) {
+        return -1;
+    }
+
+    return change_tickets(pid, tickets);
+}

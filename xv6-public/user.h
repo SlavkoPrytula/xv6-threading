@@ -56,3 +56,5 @@ struct lock {
 void lock_acquire(struct lock *lock);
 void lock_release(struct lock *lock);
 
+int change_tickets(int, int);
+

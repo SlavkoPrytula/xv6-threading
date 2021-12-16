@@ -320,21 +320,40 @@ wait(void)
 }
 
 // ---------------------------------------------------------------------
-int totalTickets(void) {
-
+int get_tickets(void) {
     struct proc *p;
-    int total = 0;
+    int sum = 0;
+
+    // Searching for RUNNABLE processes to get their tickets
     for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
         if (p->state == RUNNABLE) {
-            total += p->tickets;
+            sum += p->tickets;
         }
     }
 
-    return total;
+    return sum;
 }
 
-int random(int max) {
+int change_tickets(int pid, int tickets) {
+    struct proc *p;
+    cprintf("process: %d, set tickets to: %d\n", pid, tickets);
 
+    acquire(&ptable.lock);
+    // Looking for process with specified pid id to change its ticket count
+    for (p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+        if (p->pid == pid) {
+            p->tickets = tickets;
+            break;
+        }
+    }
+    release(&ptable.lock);
+
+    return pid;
+}
+
+
+int random(int max) {
+    // LFSR alogrithm found here: http://goo.gl/At4AIC
     if (max <= 0) {
         return 1;
     }
@@ -355,13 +374,13 @@ int random(int max) {
     z4 = (((z4 & 4294967168) << 13) ^ b);
 
     // if we have an argument, then we can use it
-    int rand = ((z1 ^ z2 ^ z3 ^ z4)) % max;
+    int num = ((z1 ^ z2 ^ z3 ^ z4)) % max;
 
-    if (rand < 0) {
-        rand = rand * -1;
+    if (num < 0) {
+        num = num * -1;
     }
 
-    return rand;
+    return num;
 }
 
 
@@ -380,14 +399,15 @@ void scheduler(void) {
             if(p->state != RUNNABLE)
               continue;
 
-            int totalT = totalTickets();
-            int draw = -1;
+            int tickets_sum = get_tickets();
+            int choice = -1;
 
-          	if (totalT > 0 || draw <= 0) {
-                draw = random(totalT);
+          	if (tickets_sum > 0) {
+                choice = random(tickets_sum);
+//                cprintf("-> Random returned: %d\n", choice);
             }
 
-            if (draw >= p->tickets) {
+            if (choice >= p->tickets) {
                 continue;
             }
 

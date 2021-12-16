@@ -37,3 +37,6 @@ SYSCALL(hello_world)
 SYSCALL(clone)
 // Join
 SYSCALL(join)
+
+// Scheduler
+SYSCALL(change_tickets)

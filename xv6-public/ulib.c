@@ -130,3 +130,4 @@ void lock_release(struct lock *lock) {
     // release lock
     lock->locked = 0;
 }
+

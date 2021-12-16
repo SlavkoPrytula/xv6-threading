@@ -114,6 +114,8 @@ extern int sys_clone(void);
 // Join
 extern int sys_join(void);
 
+extern int sys_change_tickets(void);
+
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -141,7 +143,8 @@ static int (*syscalls[])(void) = {
 // NEW
 [SYS_hello_world]   sys_hello_world,
 [SYS_clone]	sys_clone,
-[SYS_join]	sys_join
+[SYS_join]	sys_join,
+[SYS_change_tickets] sys_change_tickets
 
 };
 
