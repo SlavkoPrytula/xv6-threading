@@ -185,6 +185,8 @@ UPROGS=\
 	_test_threads_01\
 	_test_locks_02\
 	_test_scheduler_03\
+	_test_tickets_04\
+	_test_mcs_locks_05\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)

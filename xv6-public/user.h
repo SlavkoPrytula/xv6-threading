@@ -49,12 +49,31 @@ int thread_join();
 
 struct lock {
     volatile unsigned int locked;
+
     volatile unsigned int next_ticket;
     volatile int now_serving;
 };
 
 void lock_acquire(struct lock *lock);
 void lock_release(struct lock *lock);
+
+void ticket_acquire(struct lock *lock);
+void ticket_release(struct lock *lock);
+
+struct qnode {
+    volatile void *next;
+    volatile char locked;
+    char __pad[0] __attribute__((aligned(CACHELINE)));
+};
+
+typedef struct {
+    struct qnode *v  __attribute__((aligned(64)));
+    int lock_idx  __attribute__((aligned(64)));
+} mcslock_t;
+
+void mcs_init(mcslock_t *l);
+void mcs_lock(mcslock_t *l, volatile struct qnode *mynode);
+void mcs_unlock(mcslock_t *l, volatile struct qnode *mynode);
 
 int change_tickets(int, int);
 

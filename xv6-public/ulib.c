@@ -5,6 +5,7 @@
 #include "x86.h"
 
 
+
 #define PGSIZE 4096
 
 
@@ -131,3 +132,42 @@ void lock_release(struct lock *lock) {
     lock->locked = 0;
 }
 
+
+void ticket_acquire(struct lock *lock) {
+    int me = read_and_increment(&lock->next_ticket);
+    while(lock->now_serving != me);
+}
+
+void ticket_release(struct lock *lock) {
+    lock->now_serving += 1;
+}
+
+
+static inline void mcs_init(mcslock_t *l) {
+    l->v = NULL;
+}
+
+static inline void mcs_lock(mcslock_t *l, volatile struct qnode *mynode) {
+    struct qnode *predecessor;
+
+    mynode->next = NULL;
+    predecessor = (struct qnode *)xchg((long *)&l->v, (long)mynode);
+
+    if (predecessor) {
+        mynode->locked = 1;
+        asm volatile("":::"memory");
+        predecessor->next = mynode;
+        while (mynode->locked)
+                __asm __volatile("pause");
+    }
+}
+
+static inline void mcs_unlock(mcslock_t *l, volatile struct qnode *mynode) {
+    if (!mynode->next) {
+        if (cmpxchg((long *)&l->v, (long)mynode, 0) == (long)mynode)
+            return;
+        while (!mynode->next)
+                __asm __volatile("pause");
+    }
+    ((struct qnode *)mynode->next)->locked = 0;
+}

@@ -1,4 +1,7 @@
 // Routines to let C code use special x86 instructions.
+//#include <stdlib.h>
+#include <stdint.h>
+
 
 static inline uchar
 inb(ushort port)
@@ -155,6 +158,40 @@ static inline unsigned int test_and_set(volatile unsigned int *addr) {
         "1" (new) :
         "cc");
     return result;
+}
+
+
+static __inline unsigned int read_and_increment(volatile unsigned int *p) {
+    int v = 1;
+    __asm __volatile (
+    "   lock; xaddl   %0, %1 ;    "
+    : "+r" (v),
+    "=m" (*p)
+    : "m" (*p));
+
+    return (v);
+}
+
+
+static inline long xchg(long *ptr, long val) {
+    __asm__ volatile(
+    "lock; xchgq %0, %1\n\t"
+    : "+m" (*ptr), "+r" (val)
+    :
+    : "memory", "cc");
+    return val;
+}
+
+
+static inline long cmpxchg(long *ptr, long old, long val) {
+        uint64_t out;
+    __asm__ volatile(
+    "lock; cmpxchgq %2, %1"
+    : "=a" (out), "+m" (*ptr)
+    : "q" (val), "0"(old)
+    : "memory");
+
+    return out;
 }
 
 
