@@ -34,8 +34,8 @@ int main(int argc, char *argv[]) {
 
     // Changing second process' ticket count for it to have a
     // higher probability of being executed first
-    change_tickets(process_01, 1);
-    change_tickets(process_02, 200);
+    change_tickets(process_01, 300);
+    change_tickets(process_02, 1);
 
     thread_join();
     thread_join();
