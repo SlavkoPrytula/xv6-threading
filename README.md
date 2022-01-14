@@ -43,14 +43,11 @@ Each process’s address space maps the kernel’s instructions and data as well
 
 - In order to leave room for user memory to grow, xv6’s address spaces map the kernel at high addresses, starting at 0x80100000
 
-```diff
-- A process’s most important pieces of kernel state are its page table, its kernel stack, and its run state. 
-```
-```diff 
-@@ Each process has two stacks: a user stack and a kernel stack (p->kstack) @@
-@@ p->state indicates whether the process is allocated, ready to run, running, waiting for I/O, or exiting @@
-@@ Each process has two stacks: a user stack and a kernel stack (p->kstack) @@
-```
+**A process’s most important pieces of kernel state are its page table, its kernel stack, and its run state**
+
+**Each process has two stacks: a user stack and a kernel stack (p->kstack)**
+**p->state indicates whether the process is allocated, ready to run, running, waiting for I/O, or exiting**
+**Each process has two stacks: a user stack and a kernel stack (p->kstack)**
 
 ---
 ## ❓ Running the first process
@@ -87,7 +84,11 @@ Scheduler looks for a process with p->state set to **RUNNABLE**
  
 ---
 
-# ✋ Locks
+# Synchronization
+
+**The lack of synchronization between the threads while using the shared resource may caused problems**
+
+## ✋ Locks
  
  - Xv6 runs on multiprocessors, computers with multiple CPUs executing code independently. These multiple CPUs operate on a single physical address space and share
 data structures; xv6 must introduce a coordination mechanism to keep them from interfering with each other
@@ -95,7 +96,7 @@ data structures; xv6 must introduce a coordination mechanism to keep them from i
 only one CPU at a time can hold the lock
 
 
-## Race Condition
+### Race Condition
 
 - The very first proble that we are trying to solve is regarting race conditions
 
@@ -109,7 +110,7 @@ only one CPU at a time can hold the lock
 - compare-and-swap:
   - atomically compares the contents of the memory area with the specified value and, only if they are the same, changes the contents of this memory area to the specified new value
 
-## Usage
+### Usage
 
 ```cpp
 void lock_acquire(struct lock *lock);
@@ -128,6 +129,109 @@ void func_02(void *arg) {
     exit();
 }
 ```
+
+
+## ⚙️ Mutex
+
+- A Mutex is a lock that we set before using a shared resource and release after using it
+- When the lock is set, no other thread can access the locked region of code
+- So we see that even if thread 2 is scheduled while thread 1 was not done accessing the shared resource and the code is locked by thread 1 using mutexes then thread 2 cannot even access that region of code
+- So this ensures synchronized access of shared resources in the code
+
+![image](https://user-images.githubusercontent.com/25413268/149570032-1b802647-7c8b-42dc-87de-e8d328a890c9.png)
+
+[ Here we can obesrve that thread A is the first one to acqire the shared resources, thus then thread B comes and want to use it the mutex puts a barrier for it. The thread B then waits for the thread A to release the mutex and then it can use the same resources without any race conditions ]
+
+
+
+### Usage
+
+```cpp
+int mutex_init();
+int mutex_lock(int);
+int mutex_unlock(int);
+```
+
+
+```cpp
+int mutex = mutex_init(); // returns mutex id
+if (mutex < 0) {
+    printf(1, "\n----Error while creating a mutex!----\n");
+}
+```
+
+```cpp
+void func_01(void *arg) {
+    if (mutex_lock(mutex) < 0) {
+        printf(1, "\n----Error while locking a mutex!----\n");
+    }
+
+    for (int i = 0; i < 100; i++) {
+        printf(1, "locked 01 ");
+    }
+
+    if (mutex_unlock(mutex) < 0) {
+        printf(1, "\n----Error while unlocking a mutex!----\n");
+    }
+
+    exit();
+}
+```
+
+
+
+## 🛑 Barriers
+
+In cases where you must wait for a number of tasks to be completed before an overall task can proceed, **barrier synchronization** can be used. Threads specifys a synchronization object called a barrier, along with barrier functions
+
+- The functions create the barrier, specifying the number of threads that are synchronizing on the barrier, and set up threads to perform tasks and wait at the barrier until all the threads reach the barrier
+
+- When the last thread arrives at the barrier, all the threads resume execution
+
+
+![image](https://user-images.githubusercontent.com/25413268/149571613-33cdab8a-1c4f-4351-b887-3cee496afb6b.png)
+
+
+
+### Usage
+
+```cpp
+int barrier_init(int);
+int barrier_lock();
+```
+
+
+```cpp
+barrier_init(2);
+
+thread_create(func_01, "");
+thread_create(func_02, "");
+thread_join();
+thread_join();
+```
+
+```cpp
+void func_01(void *arg) {   // finishes first and waits
+    sleep(10);
+    printf(1, "function 01 entered \n");
+    barrier_lock();
+    printf(1, "function 01 exited \n");
+
+    exit();
+}
+
+void func_02(void *arg) {   // takes more time to finish
+    sleep(200);
+    printf(1, "function 02 entered \n");
+    barrier_lock();
+    printf(1, "function 02 exited \n");
+
+    exit();
+}
+```
+
+
+
 
 
 ---
@@ -219,61 +323,7 @@ int main(int argc, char *argv[]) {
 
 ---
 
- 
-## Mainly Used SysCalls
 
-```cpp
-int clone(void(*function)(void*), void *arg, void *stack)   // allocates memory and creates a new process
-```
-
-```cpp
-int join(void **stack)  // waits for the processes to reach ZOMBIE state - aka. to finish their work
-```
-
-```cpp
-void sleep(void*, struct spinlock*)   // waits
-```
-
-```cpp
-int getpid(void)    //  return current process’s id
-```
-
----
-
-## Mainly used Functions
-
-```cpp
-void acquire(struct spinlock*);    // lock - used to set state for the process without race condition
-void release(struct spinlock*)    // unlock
-```
-
-```cpp
-void* malloc(uint)    // allocates memory
-```
-
-```cpp  
-void free(void*)    // free memory
-```
-
-```cpp
-int change_tickets(int pid, int tickets)    // change tickets for some process
-```
-
-```cpp
-int get_tickets(void)   // get total accumulation of tickets in the system
-```
-
-```cpp
-int random(int max)   // generates random number
-```
-
-```cpp
-void lock_acquire(struct lock *lock)    // acquire lock
-```
-
-```cpp
-void lock_release(struct lock *lock)    // release lock
-```
 
 --- 
 # 💻 Work in Progress...
