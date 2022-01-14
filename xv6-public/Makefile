@@ -187,6 +187,7 @@ UPROGS=\
 	_test_scheduler_03\
 	_test_tickets_04\
 	_test_mutex_05\
+	_test_barrier_06\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)

@@ -41,8 +41,11 @@ SYSCALL(join)
 // Scheduler
 SYSCALL(change_tickets)
 
-
+// Mutex
 SYSCALL(mutex_init)
 SYSCALL(mutex_lock)
 SYSCALL(mutex_unlock)
 
+// Barrier
+SYSCALL(barrier_init)
+SYSCALL(barrier_lock)

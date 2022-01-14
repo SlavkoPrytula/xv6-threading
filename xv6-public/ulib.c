@@ -164,24 +164,3 @@ void ticket_release(struct lock *lock) {
     lock->now_serving += 1;
 }
 
-
-//int mutex_create() {
-//    int id;
-//    id = mutex_init();
-//
-//    return id;
-//}
-//
-//int amutex_lock(int id) {
-//    int result;
-//    result = mutex_lock(id);
-//
-//    return result;
-//}
-//
-//int amutex_unlock(int id) {
-//    int result;
-//    result = mutex_unlock(id);
-//
-//    return result;
-//}

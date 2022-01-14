@@ -61,7 +61,7 @@ struct proc {
 enum mutexstate { LOCKED, UNLOCKED };
 
 struct mutex_struct {
-    int mid;
+    int id;
     enum mutexstate state;
 };
 

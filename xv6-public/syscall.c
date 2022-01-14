@@ -124,6 +124,9 @@ extern int sys_mutex_init(void);
 extern int sys_mutex_lock(void);
 extern int sys_mutex_unlock(void);
 
+extern int sys_barrier_init(void);
+extern int sys_barrier_lock(void);
+
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -157,6 +160,9 @@ static int (*syscalls[])(void) = {
 [SYS_mutex_init]  sys_mutex_init,
 [SYS_mutex_lock]  sys_mutex_lock,
 [SYS_mutex_unlock]  sys_mutex_unlock,
+
+[SYS_barrier_init]  sys_barrier_init,
+[SYS_barrier_lock] sys_barrier_lock,
 
 };
 

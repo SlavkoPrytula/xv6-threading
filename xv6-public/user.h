@@ -69,4 +69,6 @@ int mutex_init();
 int mutex_lock(int);
 int mutex_unlock(int);
 
-//int mutex_create();
+
+int barrier_init(int);
+int barrier_lock(void);

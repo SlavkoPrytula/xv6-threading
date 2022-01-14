@@ -50,10 +50,10 @@ struct cpu*
 mycpu(void)
 {
   int apicid, i;
-  
+
   if(readeflags()&FL_IF)
     panic("mycpu called with interrupts enabled\n");
-  
+
   apicid = lapicid();
   // APIC IDs are not guaranteed to be contiguous. Maybe we should have
   // a reverse map, or reserve a register to store &cpus[i].
@@ -136,7 +136,7 @@ userinit(void)
   extern char _binary_initcode_start[], _binary_initcode_size[];
 
   p = allocproc();
-  
+
   initproc = p;
   if((p->pgdir = setupkvm()) == 0)
     panic("userinit: out of memory?");
@@ -289,7 +289,7 @@ wait(void)
   struct proc *p;
   int havekids, pid;
   struct proc *curproc = myproc();
-  
+
   acquire(&ptable.lock);
   for(;;){
     // Scan through table looking for exited children.
@@ -540,7 +540,7 @@ void
 sleep(void *chan, struct spinlock *lk)
 {
   struct proc *p = myproc();
-  
+
   if(p == 0)
     panic("sleep");
 
@@ -773,72 +773,96 @@ int join(void **stack) {
 }
 
 
-
+// Mutex
 int mutex_init() {
+    // Initialize mutexes to ready state (unlocked)
+    // Returns id of the new mutex
     struct mutex_struct *m;
-
     acquire(&mtable.lock);
 
-//    for(process = ptable.proc; process < &ptable.proc[NPROC]; process++){
-    for(m = mtable.mutex; m->state != LOCKED && m < &mtable.mutex[MAX_MUTEXES]; m++);
-
-    if(m == &mtable.mutex[MAX_MUTEXES])
-    {
+    for (m = mtable.mutex; m->state != LOCKED && m < &mtable.mutex[MAX_MUTEXES]; m++);
+    if (m == &mtable.mutex[MAX_MUTEXES]) {
         release(&mtable.lock);
         return -1;
     }
-
-    m->mid = nextmid++;
+    m->id = nextmid++;
     m->state = UNLOCKED;
 
     release(&mtable.lock);
-    return m->mid;
+    return m->id;
 }
 
 int mutex_lock(int mutex_id) {
+    // Locks the mutex by its unique id
     struct mutex_struct *m;
-
     acquire(&mtable.lock);
-    for(m = mtable.mutex; m->mid != mutex_id && m < &mtable.mutex[MAX_MUTEXES]; m++);
 
-    if(m == &mtable.mutex[MAX_MUTEXES])
-    {
+    // Iterate to find the specific id
+    for (m = mtable.mutex; m->id != mutex_id && m < &mtable.mutex[MAX_MUTEXES]; m++);
+    if (m == &mtable.mutex[MAX_MUTEXES]) {
         release(&mtable.lock);
         return -1;
     }
 
-    while(m->state == LOCKED)
+    // If already locked by another process create a wait loop
+    // The mutex will be acquired when another thread finishes using it
+    while (m->state == LOCKED) {
         sleep(m, &mtable.lock);
-
-    if(m->state != UNLOCKED) // may happen if another process thinks about change the state to UNUSED while waiting here.
-    {
-        release(&mtable.lock);
-        return -1;
     }
 
-    m->state = LOCKED;
+    m->state = LOCKED;  // Set the state to locked
 
     release(&mtable.lock);
-
     return 0;
 }
 
 
 int mutex_unlock(int mutex_id) {
+    // Unlocks the mutes by unique id
     struct mutex_struct *m;
-
     acquire(&mtable.lock);
-    for(m = mtable.mutex; m->mid != mutex_id && m < &mtable.mutex[MAX_MUTEXES]; m++);
 
-    if(m == &mtable.mutex[MAX_MUTEXES] || m->state != LOCKED)
-    {
+    // Iterate to find the specific id
+    for (m = mtable.mutex; m->id != mutex_id && m < &mtable.mutex[MAX_MUTEXES]; m++);
+    if (m == &mtable.mutex[MAX_MUTEXES] || m->state != LOCKED) {
         release(&mtable.lock);
         return -1;
     }
-
-    m->state = UNLOCKED;
+    m->state = UNLOCKED;    // Set the state to unlocked
     wakeup1(m);
 
     release(&mtable.lock);
+    return 0;
+}
+
+
+// Barrier
+int count = 0;
+int proc_count;
+struct spinlock lock;
+
+int barrier_init(int n) {
+    // Initialize the barrier with specific target of threads to be blocked
+    count = 0;
+    initlock(&lock, "barrier_lock");
+    proc_count = n;
+
+    return 0;
+}
+
+int barrier_lock(void) {
+    // The first n-1 calls will be blocked by barrier
+    // The nth call will unlock all the waiting threads
+    acquire(&lock);
+
+    count += 1;
+    while(count < proc_count) {
+        // Waiting loop
+        sleep(&proc_count, &lock);
+    }
+    // nth call reached this part - unlock the barrier
+    wakeup(&proc_count);
+    release(&lock);
+
     return 0;
 }

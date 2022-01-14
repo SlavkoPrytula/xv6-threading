@@ -146,16 +146,6 @@ int sys_mutex_init(void) {
     return mutex_init();
 }
 
-//int
-//sys_kthread_mutex_dealloc(void)
-//{
-//    int mutex_id;
-//    if(argint(0, &mutex_id) < 0)
-//        return -1;
-//
-//    return kthread_mutex_dealloc(mutex_id);
-//}
-
 int sys_mutex_lock(void) {
     int mutex_id;
     if(argint(0, &mutex_id) < 0)
@@ -170,4 +160,21 @@ int sys_mutex_unlock(void) {
         return -1;
 
     return mutex_unlock(mutex_id);
+}
+
+
+extern int barrier_init(int);
+extern int barrier_lock(void);
+
+int sys_barrier_init(void) {
+    int variable;
+    if(argint(0, &variable) < 0){
+        return -1;
+    }
+
+    return barrier_init(variable);
+}
+
+int sys_barrier_lock(void) {
+    return barrier_lock();
 }

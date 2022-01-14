@@ -32,3 +32,6 @@
 #define SYS_mutex_init  26
 #define SYS_mutex_lock  27
 #define SYS_mutex_unlock  28
+
+#define SYS_barrier_init 29
+#define SYS_barrier_lock 30
