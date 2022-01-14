@@ -140,7 +140,7 @@ void func_02(void *arg) {
 
 ![image](https://user-images.githubusercontent.com/25413268/149570032-1b802647-7c8b-42dc-87de-e8d328a890c9.png)
 
-[ Here we can obesrve that thread A is the first one to acqire the shared resources, thus then thread B comes and want to use it the mutex puts a barrier for it. The thread B then waits for the thread A to release the mutex and then it can use the same resources without any race conditions ]
+[ Here we can obesrve that thread A is the first one to acquire the shared resources, thus then thread B comes and want to use it the mutex puts a barrier for it. The thread B then waits for the thread A to release the mutex and then it can use the same resources without any race conditions ]
 
 
 
@@ -202,7 +202,7 @@ int barrier_lock();
 
 
 ```cpp
-barrier_init(2);
+barrier_init(2);  // n = 2, two processes expect to acquire the barrier lock 
 
 thread_create(func_01, "");
 thread_create(func_02, "");
