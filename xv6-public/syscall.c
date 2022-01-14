@@ -114,7 +114,15 @@ extern int sys_clone(void);
 // Join
 extern int sys_join(void);
 
+// Sheduler
 extern int sys_change_tickets(void);
+
+
+// Mutexes
+extern int sys_mutex_init(void);
+//extern int sys_mutex_dealloc(void);
+extern int sys_mutex_lock(void);
+extern int sys_mutex_unlock(void);
 
 
 static int (*syscalls[])(void) = {
@@ -144,7 +152,11 @@ static int (*syscalls[])(void) = {
 [SYS_hello_world]   sys_hello_world,
 [SYS_clone]	sys_clone,
 [SYS_join]	sys_join,
-[SYS_change_tickets] sys_change_tickets
+[SYS_change_tickets] sys_change_tickets,
+
+[SYS_mutex_init]  sys_mutex_init,
+[SYS_mutex_lock]  sys_mutex_lock,
+[SYS_mutex_unlock]  sys_mutex_unlock,
 
 };
 

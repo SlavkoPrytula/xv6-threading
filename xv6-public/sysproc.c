@@ -137,3 +137,37 @@ int sys_change_tickets(void) {
 
     return change_tickets(pid, tickets);
 }
+
+extern int mutex_init(void);
+extern int mutex_lock(int);
+extern int mutex_unlock(int);
+
+int sys_mutex_init(void) {
+    return mutex_init();
+}
+
+//int
+//sys_kthread_mutex_dealloc(void)
+//{
+//    int mutex_id;
+//    if(argint(0, &mutex_id) < 0)
+//        return -1;
+//
+//    return kthread_mutex_dealloc(mutex_id);
+//}
+
+int sys_mutex_lock(void) {
+    int mutex_id;
+    if(argint(0, &mutex_id) < 0)
+        return -1;
+
+    return mutex_lock(mutex_id);
+}
+
+int sys_mutex_unlock(void) {
+    int mutex_id;
+    if(argint(0, &mutex_id) < 0)
+        return -1;
+
+    return mutex_unlock(mutex_id);
+}

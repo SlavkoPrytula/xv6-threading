@@ -18,9 +18,15 @@ struct {
   struct proc proc[NPROC];
 } ptable;
 
+struct {
+    struct spinlock lock;
+    struct mutex_struct mutex[MAX_MUTEXES];
+} mtable;
+
 static struct proc *initproc;
 
 int nextpid = 1;
+int nextmid = 1;
 extern void forkret(void);
 extern void trapret(void);
 
@@ -764,4 +770,75 @@ int join(void **stack) {
         }
         sleep(curr_process, &ptable.lock);  //DOC: wait-sleep
     }
+}
+
+
+
+int mutex_init() {
+    struct mutex_struct *m;
+
+    acquire(&mtable.lock);
+
+//    for(process = ptable.proc; process < &ptable.proc[NPROC]; process++){
+    for(m = mtable.mutex; m->state != LOCKED && m < &mtable.mutex[MAX_MUTEXES]; m++);
+
+    if(m == &mtable.mutex[MAX_MUTEXES])
+    {
+        release(&mtable.lock);
+        return -1;
+    }
+
+    m->mid = nextmid++;
+    m->state = UNLOCKED;
+
+    release(&mtable.lock);
+    return m->mid;
+}
+
+int mutex_lock(int mutex_id) {
+    struct mutex_struct *m;
+
+    acquire(&mtable.lock);
+    for(m = mtable.mutex; m->mid != mutex_id && m < &mtable.mutex[MAX_MUTEXES]; m++);
+
+    if(m == &mtable.mutex[MAX_MUTEXES])
+    {
+        release(&mtable.lock);
+        return -1;
+    }
+
+    while(m->state == LOCKED)
+        sleep(m, &mtable.lock);
+
+    if(m->state != UNLOCKED) // may happen if another process thinks about change the state to UNUSED while waiting here.
+    {
+        release(&mtable.lock);
+        return -1;
+    }
+
+    m->state = LOCKED;
+
+    release(&mtable.lock);
+
+    return 0;
+}
+
+
+int mutex_unlock(int mutex_id) {
+    struct mutex_struct *m;
+
+    acquire(&mtable.lock);
+    for(m = mtable.mutex; m->mid != mutex_id && m < &mtable.mutex[MAX_MUTEXES]; m++);
+
+    if(m == &mtable.mutex[MAX_MUTEXES] || m->state != LOCKED)
+    {
+        release(&mtable.lock);
+        return -1;
+    }
+
+    m->state = UNLOCKED;
+    wakeup1(m);
+
+    release(&mtable.lock);
+    return 0;
 }

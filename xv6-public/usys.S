@@ -40,3 +40,9 @@ SYSCALL(join)
 
 // Scheduler
 SYSCALL(change_tickets)
+
+
+SYSCALL(mutex_init)
+SYSCALL(mutex_lock)
+SYSCALL(mutex_unlock)
+

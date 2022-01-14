@@ -27,3 +27,8 @@
 #define SYS_join 24
 
 #define SYS_change_tickets  25
+
+
+#define SYS_mutex_init  26
+#define SYS_mutex_lock  27
+#define SYS_mutex_unlock  28

@@ -57,6 +57,14 @@ struct proc {
   int tickets;
 };
 
+
+enum mutexstate { LOCKED, UNLOCKED };
+
+struct mutex_struct {
+    int mid;
+    enum mutexstate state;
+};
+
 // Process memory is laid out contiguously, low addresses first:
 //   text
 //   original data and bss

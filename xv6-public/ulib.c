@@ -3,6 +3,8 @@
 #include "fcntl.h"
 #include "user.h"
 #include "x86.h"
+//#include "defs.h"
+
 
 
 #define PGSIZE 4096
@@ -120,14 +122,66 @@ int thread_join() {
     return pid;
 }
 
+
+//void
+//pushcli(void)
+//{
+//    int eflags;
+//
+//    eflags = readeflags();
+//    cli();
+//    if(mycpu()->ncli == 0)
+//        mycpu()->intena = eflags & FL_IF;
+//    mycpu()->ncli += 1;
+//}
+
+
 void lock_acquire(struct lock *lock) {
     // acquire lock
+//    pushcli();
+
     while(test_and_set(&lock->locked) == 1)
         ; // wait
+
+//    __sync_synchronize();
 }
 
 void lock_release(struct lock *lock) {
     // release lock
     lock->locked = 0;
+
+//    __sync_synchronize();
+//    popcli();
 }
 
+
+void ticket_acquire(struct lock *lock) {
+    int me = read_and_increment(&lock->next_ticket);
+    while(lock->now_serving != me);
+}
+
+void ticket_release(struct lock *lock) {
+    lock->now_serving += 1;
+}
+
+
+//int mutex_create() {
+//    int id;
+//    id = mutex_init();
+//
+//    return id;
+//}
+//
+//int amutex_lock(int id) {
+//    int result;
+//    result = mutex_lock(id);
+//
+//    return result;
+//}
+//
+//int amutex_unlock(int id) {
+//    int result;
+//    result = mutex_unlock(id);
+//
+//    return result;
+//}

@@ -56,5 +56,17 @@ struct lock {
 void lock_acquire(struct lock *lock);
 void lock_release(struct lock *lock);
 
+void ticket_acquire(struct lock *lock);
+void ticket_release(struct lock *lock);
+
+
+#define CACHELINE = 64;
+
 int change_tickets(int, int);
 
+
+int mutex_init();
+int mutex_lock(int);
+int mutex_unlock(int);
+
+//int mutex_create();
