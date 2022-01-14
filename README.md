@@ -1,4 +1,4 @@
-# xv6-threading
+  # xv6-threading
 
 #### **Kernel level support for threads along with threading library as wrapper for creating adn running multiple processes**
 
@@ -85,7 +85,140 @@ Scheduler looks for a process with p->state set to **RUNNABLE**
 
  The main concept of running a new thread becomes the process of allocating the required memory with the new process and sharing the calling process's address space. 
  
+---
+
+# ✋ Locks
  
+ - Xv6 runs on multiprocessors, computers with multiple CPUs executing code independently. These multiple CPUs operate on a single physical address space and share
+data structures; xv6 must introduce a coordination mechanism to keep them from interfering with each other
+ - A lock provides mutual exclusion, ensuring that
+only one CPU at a time can hold the lock
+
+
+## Race Condition
+
+- The very first proble that we are trying to solve is regarting race conditions
+
+![image](https://user-images.githubusercontent.com/25413268/146637443-8a5f4145-c61a-458d-af6c-8d0fc4544200.png)
+
+- Unfortunately, the usual implementation does not guarantee mutual exclusion on a modern multiprocessor system. After all, it is possible that two or more processes simultaneously access the lock structure to determine whether they will work or wait
+- The solution is to introduce **atomicity**. To execute these two lines atomically, xv6 relies on the xchg statement. In one atomic operation, xchg changes the word in memory to the contents of the register. In this way we can ensure the correct execution of successive programs
+
+- test-and-set:
+  - changes the contents of a memory location and returns it to its old value as a single atomic operation
+- compare-and-swap:
+  - atomically compares the contents of the memory area with the specified value and, only if they are the same, changes the contents of this memory area to the specified new value
+
+## Usage
+
+```cpp
+void lock_acquire(struct lock *lock);
+void lock_release(struct lock *lock);
+```
+
+```cpp
+struct lock mylock;
+
+void func_02(void *arg) {
+    lock_acquire(&mylock);
+    for (int i = 0; i < 100; i++) {
+        printf(1, "locked 02 ");
+    }
+    lock_release(&mylock);
+    exit();
+}
+```
+
+
+---
+
+# 🕖 Scheduling
+
+ - Any operating system is likely to run more processes than the processors on your computer, so you need a plan to distribute the processors between processes. The ideal plan is transparent to user processes
+ - The general approach is to create for each process the illusion that it has its own virtual processor and multiplex operating system, multiple virtual processors on one physical processor
+
+
+## Multiplexing
+
+ - Xv6 uses this multiplexing approach. When a process waits for a disk prompt, xv6 puts it to sleep and plans to start another process
+ - In addition, xv6 uses timer interrupts to force the process to stop running on the processor after a fixed period of time ~ 100ms ~ so that it can schedule another process on the processor
+
+```diff
+- This multiplexing creates the illusion that each process has its own CPU, just as xv6 used a memory allocator and hardware page tables to create the illusion that each process has its own memory
+```
+
+## Context switching
+
+![image](https://user-images.githubusercontent.com/25413268/146637673-e3518d35-e696-4122-866c-1d2eef616387.png)
+
+- xv6 performs two types of low-level context switching:
+  - from the process core flow to the current CPU scheduler flow
+  - from the scheduler flow to the process kernel flow
+
+- Xv6 itself never switches directly from one process in user space to another
+
+
+## Scheduling
+
+The plan for this is as follows:
+- A process that wants to give CPU resources to another process must be intact, so locks are used
+- Then release any other locks it holds. And update your own state (proc -> state), and then call the scheduler
+
+- **scheduler** goes through the table of processes in search of a process that can be executed, which has p-> state == **RUNNABLE**. Once it finds a process, it sets the current process variable for each processor, switches to the process page table, marks the process as RUNNING, and then calls swtch to start it
+
+
+![image](https://user-images.githubusercontent.com/25413268/146637742-36df254c-ad24-4a49-ae17-2e90e548d02b.png)
+
+## Algorithms
+
+### Round Robin
+
+Xv6 itself uses the Round Robing algorithm as a scheduler. It is the simplest algorithm of advanced planning
+
+It runs the program for until:
+ - it can no longer work, either
+ - it works too long (exceeds the "quantum of time")
+
+![image](https://user-images.githubusercontent.com/25413268/146637791-783a4df9-4fca-48a1-bdbd-df359982317f.png)
+
+
+## Lottery Ticket
+
+In our example we implement a weel known Lottery Ticket scheduling algorithm for process execution mangement
+
+ - The lottery is a probabilistic scheduling algorithm where at each process are each assigned some number of lottery tickets and the scheduler draws a random ticket to select the next process to run
+ - The distribution of tickets need not be uniform
+  - granting a process more tickets provides it a relative higher chance of selection
+
+- This requires a random number generation and O(n) operations to traverse a client list of length n, accumulating a running ticket sum until it reaches the winning value
+
+![image](https://user-images.githubusercontent.com/25413268/146637892-d53c7513-063f-4120-80c8-091c222dfe98.png)
+
+### Usage 
+
+```cpp
+int main(int argc, char *argv[]) {
+    printf(1, "Starting test runs!\n\n");
+
+    int process_01 = thread_create(func_01, "hello world 01\n");
+    int process_02 = thread_create(func_02, "hello world 02\n");
+
+    // Changing second process' ticket count for it to have a
+    // higher probability of being executed first
+    change_tickets(process_01, 1);
+    change_tickets(process_02, 200);
+
+    thread_join();
+    thread_join();
+
+    printf(1, "\n\nTest passed!\n");
+
+    exit();
+}
+```
+
+---
+
  
 ## Mainly Used SysCalls
 
@@ -122,6 +255,26 @@ void* malloc(uint)    // allocates memory
 void free(void*)    // free memory
 ```
 
+```cpp
+int change_tickets(int pid, int tickets)    // change tickets for some process
+```
+
+```cpp
+int get_tickets(void)   // get total accumulation of tickets in the system
+```
+
+```cpp
+int random(int max)   // generates random number
+```
+
+```cpp
+void lock_acquire(struct lock *lock)    // acquire lock
+```
+
+```cpp
+void lock_release(struct lock *lock)    // release lock
+```
+
 --- 
 # 💻 Work in Progress...
 
@@ -136,3 +289,4 @@ void free(void*)    // free memory
  - [4] Locks in xv6 [https://www.youtube.com/watch?v=pLgd-2gZikw&t]
  - [5] Memory Management in xv6 [https://www.cse.iitb.ac.in/~mythili/teaching/cs347_autumn2016/notes/08-xv6-memory.pdf]
  - [6] xv6 Scheduling [https://www.cs.virginia.edu/~cr4bd/4414/F2018/slides/20180911--slides-1up.pdf]
+ - [7] Lottery Ticket Scheduler [https://www.usenix.net/legacy/publications/library/proceedings/osdi/full_papers/waldspurger.pdf]
